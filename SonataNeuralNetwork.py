@@ -2,7 +2,7 @@ from pybrain.datasets import SupervisedDataSet
 from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.tools.shortcuts import buildNetwork
 import music21 as m2
-from math import log, e
+
 
 class MIDIReader(object):
 
@@ -34,19 +34,18 @@ class MIDIReader(object):
 
     @staticmethod
     def list_to_stream(note_list):
+        notes = [m2.note.Note(note[1], octave=int(note[2]), duration=m2.duration.Duration(round(note[0]*256)/256.0)) for note in note_list]
         stream = m2.stream.Stream()
-        for note in note_list:
-            p = m2.pitch.Pitch()
-            p.frequency = e ** note[1]
-            stream.append(m2.note.Note(p, duration=m2.duration.Duration(round(note[0]*256)/256.0)))
+        for note in notes:
+            stream.append(note)
         return stream
 
 
 class SonataNeuralNetwork(object):
 
     def __init__(self, prev=3):
-        self.ds = SupervisedDataSet(2 + (prev+1) * 2, 2)
-        self.net = buildNetwork(2 + (prev+1) * 2, 10, 15, 10, 2)
+        self.ds = SupervisedDataSet(2 + (prev+1) * 3, 3)
+        self.net = buildNetwork(2 + (prev+1) * 3, 10, 15, 10, 3)
         self.prev = prev
 
     def read(self, filename):
@@ -59,12 +58,11 @@ class SonataNeuralNetwork(object):
         for i in xrange(self.prev, len(notes) - 1):
             inp = [time_sig[0], time_sig[1]]
             for j in xrange(self.prev, -1, -1):
-                inp += [notes[i-j].duration.quarterLength, log(notes[i-j].frequency)]
-            self.ds.addSample(inp, (notes[i+1].duration.quarterLength, log(notes[i+1].frequency)))
+                inp += [notes[i-j].duration.quarterLength, notes[i-j].pitchClass, notes[i-j].octave]
+            self.ds.addSample(inp, (notes[i+1].duration.quarterLength, notes[i+1].pitchClass, notes[i+1].octave))
 
     def train_network(self):
         trainer = BackpropTrainer(self.net, self.ds)
-        while trainer.train() > 3800:
-            # print trainer.train()
+        while trainer.train() > 1.8:
             continue
         return self.net
