@@ -34,10 +34,11 @@ class MIDIReader(object):
 
     @staticmethod
     def list_to_stream(note_list):
-        notes = [m2.note.Note(m2.pitch.Pitch(note[1]), duration=m2.duration.Duration(round(note[0]*256)/256.0)) for note in note_list]
         stream = m2.stream.Stream()
-        for note in notes:
-            stream.append(note)
+        for note in note_list:
+            p = m2.pitch.Pitch()
+            p.frequency = note[1]
+            stream.append(m2.note.Note(p, duration=m2.duration.Duration(round(note[0]*256)/256.0)))
         return stream
 
 
@@ -64,6 +65,6 @@ class SonataNeuralNetwork(object):
     def train_network(self):
         trainer = BackpropTrainer(self.net, self.ds)
         while trainer.train() > 3800:
-            print trainer.train()
+            # print trainer.train()
             continue
         return self.net

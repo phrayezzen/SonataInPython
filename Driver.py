@@ -3,7 +3,7 @@ from music21.stream import Stream
 from os import listdir, path
 
 
-music_dir = '/Users/phrayezzen/Documents/Projects/hackathons/SonataInPython/midi/'
+music_dir = './tmidi/'
 
 
 def stream_from_notes(notes):
@@ -15,7 +15,7 @@ def stream_from_notes(notes):
 
 if __name__ == '__main__':
     snn = SonataNeuralNetwork()
-    for midi in listdir('./midi'):
+    for midi in listdir(music_dir):
         print midi
         snn.read(path.join(music_dir, midi))
     print 'training'
