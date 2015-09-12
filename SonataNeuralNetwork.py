@@ -43,10 +43,11 @@ class MIDIReader(object):
 
 class SonataNeuralNetwork(object):
 
-    def __init__(self, prev=3):
-        self.ds = SupervisedDataSet(2 + (prev+1) * 3, 3)
-        self.net = buildNetwork(2 + (prev+1) * 3, 10, 15, 10, 3)
-        self.prev = prev
+    def __init__(self):
+        self.before = 100
+        self.after = 20
+        self.ds = SupervisedDataSet(2 + 3 * self.before, 3 * self.after)
+        self.net = buildNetwork(2 + 3 * self.before, 500, 1000, 250, 3 * self.after)
 
     def read(self, filename):
         piece = MIDIReader.parse(filename)
@@ -55,14 +56,20 @@ class SonataNeuralNetwork(object):
             self.append_dataset(notes, piece['time_sigs'][0])
 
     def append_dataset(self, notes, time_sig):
-        for i in xrange(self.prev, len(notes) - 1):
+        for i in xrange(0, len(notes), self.before + self.after):
+            if len(notes[i:]) < self.before + self.after:
+                break
             inp = [time_sig[0], time_sig[1]]
-            for j in xrange(self.prev, -1, -1):
-                inp += [notes[i-j].duration.quarterLength, notes[i-j].pitchClass, notes[i-j].octave]
-            self.ds.addSample(inp, (notes[i+1].duration.quarterLength, notes[i+1].pitchClass, notes[i+1].octave))
+            out = []
+            for j in xrange(self.before):
+                inp += [notes[i+j].duration.quarterLength, notes[i+j].pitchClass, notes[i+j].octave]
+            for j in xrange(self.before, self.before + self.after):
+                out += [notes[i+j].duration.quarterLength, notes[i+j].pitchClass, notes[i+j].octave]
+            self.ds.addSample(inp, out)
 
     def train_network(self):
         trainer = BackpropTrainer(self.net, self.ds)
-        while trainer.train() > 1.8:
+        while trainer.train() > 3:
+            # print trainer.train()
             continue
         return self.net
