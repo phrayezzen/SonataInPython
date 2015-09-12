@@ -2,7 +2,7 @@ from pybrain.datasets import SupervisedDataSet
 from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.tools.shortcuts import buildNetwork
 import music21 as m2
-
+from math import log, e
 
 class MIDIReader(object):
 
@@ -37,7 +37,7 @@ class MIDIReader(object):
         stream = m2.stream.Stream()
         for note in note_list:
             p = m2.pitch.Pitch()
-            p.frequency = note[1]
+            p.frequency = e ** note[1]
             stream.append(m2.note.Note(p, duration=m2.duration.Duration(round(note[0]*256)/256.0)))
         return stream
 
@@ -59,8 +59,8 @@ class SonataNeuralNetwork(object):
         for i in xrange(self.prev, len(notes) - 1):
             inp = [time_sig[0], time_sig[1]]
             for j in xrange(self.prev, -1, -1):
-                inp += [notes[i-j].duration.quarterLength, notes[i-j].frequency]
-            self.ds.addSample(inp, (notes[i+1].duration.quarterLength, notes[i+1].frequency))
+                inp += [notes[i-j].duration.quarterLength, log(notes[i-j].frequency)]
+            self.ds.addSample(inp, (notes[i+1].duration.quarterLength, log(notes[i+1].frequency)))
 
     def train_network(self):
         trainer = BackpropTrainer(self.net, self.ds)

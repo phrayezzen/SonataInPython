@@ -1,6 +1,7 @@
 from SonataNeuralNetwork import SonataNeuralNetwork, MIDIReader
 from music21.stream import Stream
 from os import listdir, path
+from math import log
 
 
 music_dir = './tmidi/'
@@ -24,8 +25,8 @@ if __name__ == '__main__':
     # b_net = bassNN.train_network()
 
     default = [4, 4]
-    treble = stream_from_notes([[1, 440], [1, 500], [1, 550], [1, 500]])
-    bass = stream_from_notes([[0.5, 220], [0.5, 300], [0.5, 350], [1, 400], [0.5, 350], [0.5, 300]])
+    treble = stream_from_notes([[1, log(440)], [1, log(500)], [1, log(550)], [1, log(500)]])
+    bass = stream_from_notes([[0.5, log(220)], [0.5, log(300)], [0.5, log(350)], [1, log(400)], [0.5, log(350)], [0.5, log(300)]])
     s = Stream()
     s.append(treble)
     s.append(bass)
