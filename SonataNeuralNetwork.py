@@ -60,6 +60,11 @@ class MIDIReader(object):
         for note in note_list:
             p = m2.pitch.Pitch()
             p.frequency = e ** note[1]
+            p.pitchClass = round(p.pitchClass)
+            if p.pitchClass in [1, 6]:
+                p.pitchClass += 1
+            elif p.pitchClass in [3, 8, 10]:
+                p.pitchClass -= 1
             stream.append(m2.note.Note(p, duration=m2.duration.Duration(round(note[0]*4)/4.0)))
         return stream
 
@@ -68,13 +73,13 @@ class SonataNeuralNetwork(object):
 
     def __init__(self, prev=5):
         # timsig beat, timsig denom, prev + curr dur/freq, prev 3 chords, bass note
-        self.t_ds = SupervisedDataSet(2 + (prev+1) * 2 + 4, 2)
-        self.t_net = buildNetwork(2 + (prev+1) * 2 + 4, 50, 75, 25, 2)
+        self.t_ds = SupervisedDataSet((prev+1) * 2 + 4, 2)
+        self.t_net = buildNetwork((prev+1) * 2 + 4, 50, 75, 25, 2)
         self.t_freq_err = []
         self.t_dur_err = []
 
-        self.b_ds = SupervisedDataSet(2 + (prev+1) * 2 + 4, 2)
-        self.b_net = buildNetwork(2 + (prev+1) * 2 + 4, 50, 75, 25, 2)
+        self.b_ds = SupervisedDataSet((prev+1) * 2 + 4, 2)
+        self.b_net = buildNetwork((prev+1) * 2 + 4, 50, 75, 25, 2)
         self.b_freq_err = []
         self.b_dur_err = []
 
@@ -96,11 +101,11 @@ class SonataNeuralNetwork(object):
 
     def train_network(self):
         t_trainer = BackpropTrainer(self.t_net, self.t_ds)
-        while t_trainer.train() > 3800:
+        while t_trainer.train() > 1.5:
             print t_trainer.train()
             continue
         b_trainer = BackpropTrainer(self.b_net, self.b_ds)
-        while b_trainer.train() > 3800:
+        while b_trainer.train() > 1.5:
             print b_trainer.train()
             continue
         return self.t_net, self.b_net
@@ -122,7 +127,7 @@ class SonataNeuralNetwork(object):
                 self.b_dur_err.append(dur - staff[i+1][0].duration.quarterLength)
 
     def get_input(self, staff, i, piece, treble=True):
-        inp = list(piece.piece['time_sigs'][0][:2])
+        inp = []
         for j in xrange(self.prev, -1, -1):
             inp += [staff[i-j][0].duration.quarterLength, log(staff[i-j][0].frequency)]
 
