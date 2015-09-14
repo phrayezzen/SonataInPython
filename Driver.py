@@ -4,6 +4,8 @@ from music21 import clef
 from os import listdir, path
 from math import log, e
 from random import random
+from pybrain.tools.xml.networkwriter import NetworkWriter
+from pybrain.tools.xml.networkreader import NetworkReader
 
 
 music_dir = './slow/'
@@ -13,7 +15,7 @@ def new_freq(old_freq, dist):
     return log(2 ** (dist / 12) * e ** old_freq)
 
 
-def stream_from_notes(notes, net, dur, freq):
+def stream_from_notes(notes, net):
     total_dur = 0
     while total_dur < 100:
         inp = [j for i in notes for j in i][-12:] + [notes[-3][1], notes[-2][1], notes[-1][1], notes[-1][1]]
@@ -56,6 +58,7 @@ def stream_from_notes(notes, net, dur, freq):
     return MIDIReader.list_to_stream(notes)
 
 if __name__ == '__main__':
+
     snn = SonataNeuralNetwork()
     for midi in listdir(music_dir):
         print midi
@@ -63,17 +66,16 @@ if __name__ == '__main__':
     print 'training'
     t_net, b_net = snn.train_network()
 
-    snn.append_errors()
-    td, tf, bd, bf = snn.get_error_vals()
+    # snn.append_errors()
+    # td, tf, bd, bf = snn.get_error_vals()
 
-    treble = stream_from_notes([[1, log(261.6)], [1, log(329.6)], [1, log(392)], [1, log(329.6)], [1, log(392)], [1, log(523.3)]],
-                               t_net, td, tf)
+    treble = stream_from_notes([[1, log(261.6)], [1, log(329.6)], [1, log(392)], [1, log(329.6)], [1, log(392)], [1, log(523.3)]], t_net)
     treble.insert(0, clef.TrebleClef())
-    bass = stream_from_notes([[0.5, log(130.8)], [0.5, log(164.8)], [0.5, log(196)], [1, log(261.6)], [0.5, log(196)], [1, log(164.8)]],
-                             b_net, bd, bf)
+    bass = stream_from_notes([[0.5, log(130.8)], [0.5, log(164.8)], [0.5, log(196)], [1, log(261.6)], [0.5, log(196)], [1, log(164.8)]], b_net)
     bass.insert(0, clef.BassClef())
     s = Score()
     s.append(treble)
     s.append(bass)
     bass.offset = 0
+
     s.show()
